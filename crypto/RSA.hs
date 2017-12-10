@@ -1,9 +1,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 module RSA where
 
-import Data.Char
-import System.Random
-import Control.Monad
+import           Data.Char(ord, chr)
+import           Data.List(find)
+import           System.Random
+import           Control.Monad(replicateM)
+import qualified Data.Set as S
 
 -- types that can be represented as sequence of bits
 class Binary a where
@@ -79,6 +81,36 @@ alignBits :: Int -> BitString -> BitString
 alignBits n s = replicate (n - length s) 0 ++ s
 
 
+-- generates random prime number in bitstring representation with specified
+-- number of bits (k)
+-- for real applications this implementation somewhat inefficient
+generatePrime :: Int -> IO Integer
+generatePrime k = do
+  tl       <- replicateM k randomIO
+  let num  =  fromBitString (1 : tl) :: Integer
+  let num' =  head $ [x | x <- [num..], testPrime x]
+  return num'
+
+  where testPrime  n =  all ((/= 0) . (n `mod`)) [2..(floor . sqrt . fromIntegral) n]
+
+
+isCoprime :: Int -> Int -> Bool
+isCoprime a b = (factorization a `S.intersection` factorization b) == S.empty
+  where factorization 1 = S.empty
+        factorization n = let factor = head [x | x <- [2..n], n `mod` x == 0] in
+                            S.insert factor $ factorization (n `div` factor)
+
+
+-- generate pair of public and private keys for use in rsa algorithm
+generateKeys :: Int -> IO (PublicKey, PrivateKey)
+generateKeys bits = do
+  p <- generatePrime bits
+  q <- generatePrime bits
+  let n =  p * q
+  let fi = (p - 1) * (q - 1)
+  return $ error "WIP"
+
+
 main :: IO ()
 main = do
-  putStrLn "WIP"
+  print "WIP"
